@@ -81,6 +81,6 @@ for i, w in enumerate(vocab):
 pylab.xlim(tsne_results[:, 0].min(), tsne_results[:, 0].max())
 pylab.ylim(tsne_results[:, 1].min(), tsne_results[:, 1].max())
 
-pylab.savefig('hello')
+pylab.savefig('tsne_plot')
 
 pylab.close()
