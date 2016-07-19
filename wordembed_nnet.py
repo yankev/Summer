@@ -34,7 +34,7 @@ idxs = T.imatrix()
 y = T.ivector()
 
 # Parameters that have to be updated!
-# these will be vector represnetations of words in the vocabulary
+# these will be vector representations of words in the vocabulary
 embeddings = np.asarray(np.random.randn(vocab_size, embed_dim),
                         dtype=theano.config.floatX)
 t_embeddings = theano.shared(embeddings)
