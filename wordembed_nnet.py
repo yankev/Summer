@@ -29,6 +29,35 @@ def floatX(X):
 def init_weights(shape):
     return theano.shared(floatX(np.random.randn(*shape) * 0.01))
 
+# Variables for Data!
+idxs = T.imatrix()
+y = T.ivector()
+
+# Parameters that have to be updated!
+# these will be vector represnetations of words in the vocabulary
+embeddings = np.asarray(np.random.randn(vocab_size, embed_dim),
+                        dtype=theano.config.floatX)
+t_embeddings = theano.shared(embeddings)
+# we use idxs.shape[0] to deal with batches
+x = t_embeddings[idxs].reshape((idxs.shape[0], embed_layer_dim))
+w_h = init_weights((embed_layer_dim, num_hidden))
+w_o = init_weights((num_hidden, vocab_size))
+params = [t_embeddings, w_h, w_o]
+
+# define model and costs
+
+
+def model(x, w_h, w_o):
+    h = T.nnet.sigmoid(T.dot(x, w_h))
+    pyx = T.nnet.softmax(T.dot(h, w_o))
+    return pyx
+
+py_x = model(x, w_h, w_o)
+y_x = T.argmax(py_x, axis=1)
+cost = T.mean(T.nnet.categorical_crossentropy(py_x, y))
+
+# define training function and update method
+
 
 def sgd(cost, params, lr=0.1):
     grads = T.grad(cost=cost, wrt=params)
@@ -37,41 +66,13 @@ def sgd(cost, params, lr=0.1):
         updates.append([p, p - g * lr])
     return updates
 
-
-def model(x, w_h, w_o):
-    h = T.nnet.sigmoid(T.dot(x, w_h))
-    pyx = T.nnet.softmax(T.dot(h, w_o))
-    return pyx
-
-# declare some variables that we will be using
-idxs = T.imatrix()
-y = T.ivector()
-
-# we have to create the word embeddings here:
-# these will be vector represnetations of words in the vocabulary
-embeddings = np.asarray(np.random.randn(vocab_size, embed_dim),
-                        dtype=theano.config.floatX)
-
-t_embeddings = theano.shared(embeddings)
-# we use idxs.shape[0] to deal with batches
-x = t_embeddings[idxs].reshape((idxs.shape[0], embed_layer_dim))
-
-w_h = init_weights((embed_layer_dim, num_hidden))
-w_o = init_weights((num_hidden, vocab_size))
-
-py_x = model(x, w_h, w_o)
-y_x = T.argmax(py_x, axis=1)
-
-cost = T.mean(T.nnet.categorical_crossentropy(py_x, y))
-params = [t_embeddings, w_h, w_o]
-
-updates = sgd(cost, params)
-
+updates = sgd(cost, params)  # updated params w/sgd with given cost function
 train = theano.function(inputs=[idxs, y], outputs=cost, updates=updates,
                         allow_input_downcast=True)
 predict = theano.function(inputs=[idxs], outputs=y_x,
                           allow_input_downcast=True)
 
+# start training
 for i in range(100):
     for start, end in zip(range(0, len(trainx), batch_size), range(batch_size,
                           len(trainx), batch_size)):
